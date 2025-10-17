@@ -1,40 +1,32 @@
-name: 🕒 Daily BSE Data Update
-
-on:
-  schedule:
-    - cron: "0 4 * * *"    # runs daily at 9:30 AM IST
-  workflow_dispatch:        # allow manual trigger
-  push:
-    branches:
-      - main                # trigger on main
-
 jobs:
-  update_bse_data:
+  fetch:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main branch
-        uses: actions/checkout@v4
-        with:
-          ref: main
+      - name: Checkout Repo
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install Chrome and Chromedriver
         run: |
-          pip install selenium pandas requests webdriver-manager
+          sudo apt update
+          sudo apt install -y google-chrome-stable
+          CHROME_VERSION=$(google-chrome --version | grep -oE '[0-9]+' | head -1)
+          echo "Chrome version: $CHROME_VERSION"
+          pip install selenium webdriver-manager requests pandas
 
-      - name: Run BSE scraper
+      - name: Run Script
         run: |
           python bse.py
 
-      - name: Commit and push updated CSV
+      - name: Commit and Push CSV
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add corporate-events.csv
-          git commit -m "🔁 Auto-update corporate-events.csv [$(date)]" || echo "No changes to commit"
-          git push origin main
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add *.csv
+          git commit -m "Updated CSV"
+          git push
