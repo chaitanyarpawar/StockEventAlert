@@ -1,0 +1,42 @@
+name: 🕒 Daily BSE Corporate Events Updater
+
+on:
+  schedule:
+    - cron: "0 4 * * *"    # runs every day 9:30 AM IST
+  workflow_dispatch:        # allows manual run
+
+jobs:
+  update_bse_data:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout the daily branch
+      - name: 📥 Checkout daily branch
+        uses: actions/checkout@v4
+        with:
+          ref: daily
+          fetch-depth: 0
+
+      # 2️⃣ Set up Python
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 3️⃣ Install dependencies
+      - name: 📦 Install dependencies
+        run: |
+          pip install selenium pandas webdriver-manager requests
+
+      # 4️⃣ Run your BSE script
+      - name: ⚙️ Run Python script
+        run: python bse.py
+
+      # 5️⃣ Commit & push new CSV to daily
+      - name: 💾 Commit CSV changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add corporate-events.csv
+          git commit -m "Auto-update corporate-events.csv [skip ci]" || echo "No changes to commit"
+          git push origin daily
